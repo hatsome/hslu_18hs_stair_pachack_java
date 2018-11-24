@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 
 public class Pacman implements Agent {
+    private boolean leftSide = false;
     private GameState gameState = null;
     private Location goal = null;
     private Location homebase = null;
@@ -37,6 +38,9 @@ public class Pacman implements Agent {
         if (homebase == null) {
             homebase = playerLoc;
             goal = playerLoc;
+            if (playerIndex == 0) {
+                leftSide = true;
+            }
         }
 
         chooseGoal(map, playerLoc);
@@ -50,18 +54,50 @@ public class Pacman implements Agent {
         return getMove(origin, playerLoc, goal);
     }
 
-    private void chooseGoal(GameMap map, Location playerloc) {
-        if (playerloc.equals(goal) && getFood) {
-            getFood = false;
-            goal = homebase;
+    private void chooseGoal(GameMap map, Location playerLoc) {
+        if (playerLoc.equals(goal) && getFood) {
+            List<Location> neighbours = map.neighbours(playerLoc);
+            boolean foodNearBy = false;
+            for (Location neighbour : neighbours) {
+                if (map.getFood().contains(neighbour)) {
+                    goal = neighbour;
+                    foodNearBy = true;
+                    break;
+                }
+            }
+
+            if (!foodNearBy) {
+                getFood = false;
+                goal = homebase;
+            }
         }
 
-        if (playerloc.x < map.width /2 && !getFood) {
+        if (leftSide) {
+            chooseGoalLeft(map, playerLoc);
+        }
+        else {
+            chooseGoalRight(map, playerLoc);
+        }
+    }
+
+    private void chooseGoalLeft(GameMap map, Location playerLoc) {
+        if (playerLoc.x < map.width /2 && !getFood) {
             for (Location loc : map.getFood()) {
-                if (loc.x >= map.width / 2) {
+                if (loc.x >= map.width / 2 && (!getFood || getFood && loc.x < goal.x)) {
                     goal = loc;
                     getFood = true;
-                    break;
+                }
+            }
+        }
+    }
+
+    private void chooseGoalRight(GameMap map, Location playerLoc) {
+
+        if (playerLoc.x > map.width /2 && !getFood) {
+            for (Location loc : map.getFood()) {
+                if (loc.x <= map.width / 2 && (!getFood || getFood && loc.x > goal.x)) {
+                    goal = loc;
+                    getFood = true;
                 }
             }
         }
@@ -84,7 +120,7 @@ public class Pacman implements Agent {
         } else if (start.y > last.y && start.x == last.x) {
             return Direction.SOUTH;
         } else {
-            return Direction.STOP;
+            return Direction.NORTH;
         }
     }
 
@@ -108,11 +144,12 @@ public class Pacman implements Agent {
                 }
             }
         }
-        if (enemy.isWeakened()) {
+        if (enemy.isWeakened() || (enemy.getIsPacman() && !player.isWeakened())) {
             map.addFood(getLocation(enemy.getPosition()));
         }
-        else if (!enemy.getIsPacman()){
+        else if (!enemy.getIsPacman() || player.isWeakened()){
             map.addEnemy(getLocation(enemy.getPosition()));
+            map.addWall(getLocation(enemy.getPosition()));
         }
         return map;
     }
@@ -252,9 +289,15 @@ public class Pacman implements Agent {
 
         public int cost(Location a, Location b) {
             if (enemy.contains(b)) {
-                return 1000;
+                return Integer.MAX_VALUE/4;
             }
-            return food.contains(b) ? 1 : 20;
+            List<Location> neighbours = neighbours(b);
+            for (Location neighbour : neighbours) {
+                if (b.equals(neighbour) && enemy.contains(neighbour)) {
+                    return Integer.MAX_VALUE/4-1000;
+                }
+            }
+            return food.contains(b) ? 1 : 1000;
         }
 
         public List<Location> neighbours(Location id) {
