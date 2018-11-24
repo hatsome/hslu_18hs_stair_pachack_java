@@ -19,6 +19,7 @@ public class Pacman implements Agent {
     private Location homebase = null;
     private boolean getFood = true;
     private boolean printed = true;
+    private boolean enemyWeak = false;
 
     @Override
     public String getAgentInformation() {
@@ -43,6 +44,7 @@ public class Pacman implements Agent {
             }
         }
 
+        enemyWeak = enemy.isWeakened();
         chooseGoal(map, playerLoc);
         Map<Location, Location> origin = search(map, playerLoc, goal);
 
@@ -87,6 +89,11 @@ public class Pacman implements Agent {
                     goal = loc;
                     getFood = true;
                 }
+                if (!enemyWeak && loc.x >= map.width / 2 && map.getSpecial().contains(loc)) {
+                    goal = loc;
+                    getFood = true;
+                    break;
+                }
             }
         }
     }
@@ -98,6 +105,11 @@ public class Pacman implements Agent {
                 if (loc.x <= map.width / 2 && (!getFood || getFood && loc.x > goal.x)) {
                     goal = loc;
                     getFood = true;
+                }
+                if (!enemyWeak && loc.x <= map.width / 2 && map.getSpecial().contains(loc)) {
+                    goal = loc;
+                    getFood = true;
+                    break;
                 }
             }
         }
@@ -120,7 +132,7 @@ public class Pacman implements Agent {
         } else if (start.y > last.y && start.x == last.x) {
             return Direction.SOUTH;
         } else {
-            return Direction.NORTH;
+            return Direction.EAST;
         }
     }
 
@@ -137,8 +149,9 @@ public class Pacman implements Agent {
                     case WALL:
                         map.addWall(new Location(y, x));
                         break;
-                    case FOOD:
                     case CAPSULE:
+                        map.addSpecial(new Location(y, x));
+                    case FOOD:
                         map.addFood(new Location(y, x));
                         break;
                 }
@@ -267,6 +280,7 @@ public class Pacman implements Agent {
         private int width, height;
         private HashSet<Location> walls;
         private HashSet<Location> food;
+        private HashSet<Location> special;
         private HashSet<Location> enemy;
         private ArrayList<Location> directions;
 
@@ -275,6 +289,7 @@ public class Pacman implements Agent {
             this.height = height;
             this.walls = new HashSet<>();
             this.food = new HashSet<>();
+            this.special = new HashSet<>();
             this.enemy = new HashSet<>();
             this.directions = new ArrayList<>();
             this.directions.add(new Location(-1, 0));
@@ -319,12 +334,20 @@ public class Pacman implements Agent {
             food.add(location);
         }
 
+        public void addSpecial(Location location) {
+            special.add(location);
+        }
+
         public void addEnemy(Location location) {
             enemy.add(location);
         }
 
         public final HashSet<Location> getFood() {
             return food;
+        }
+
+        public final HashSet<Location> getSpecial() {
+            return special;
         }
 
         public void print(Location player, Location goal) {
