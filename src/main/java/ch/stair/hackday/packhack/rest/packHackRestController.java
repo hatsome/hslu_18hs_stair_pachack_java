@@ -32,6 +32,6 @@ public class packHackRestController {
             produces = "application/json")
     public Direction chooseAction(
             @RequestBody GameState gameField) {
-        return this.agent.chooseAction();
+        return this.agent.chooseAction(gameField);
     }
 }

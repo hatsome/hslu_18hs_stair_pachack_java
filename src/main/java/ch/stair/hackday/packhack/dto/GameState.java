@@ -16,11 +16,13 @@ public class GameState
 {
     private FieldTypes[][] gameField;
     private PublicPlayer[] publicPlayers;
+    private int agentIndex;
 
     @JsonCreator
-    public GameState(@JsonProperty("publicPlayers")PublicPlayer[] publicPlayers, @JsonProperty("gameField")FieldTypes[][] gameField){
+    public GameState(@JsonProperty("publicPlayers")PublicPlayer[] publicPlayers, @JsonProperty("gameField")FieldTypes[][] gameField, @JsonProperty("agent_id")int agentId){
         this.gameField = gameField;
         this.publicPlayers = publicPlayers;
+        this.agentIndex = agentId;
     }
 
     public FieldTypes[][] getGameField ()
@@ -41,6 +43,10 @@ public class GameState
     public void setPublicPlayers (PublicPlayer[] publicPlayers)
     {
         this.publicPlayers = publicPlayers;
+    }
+
+    public int getAgentIndex() {
+        return agentIndex;
     }
 
     @Override
